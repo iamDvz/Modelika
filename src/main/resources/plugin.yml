@@ -1,0 +1,4 @@
+name: Modelika
+version: '${project.version}'
+main: ru.iamdvz.modelika.Modelika
+api-version: 1.18
