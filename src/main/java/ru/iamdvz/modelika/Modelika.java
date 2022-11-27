@@ -10,7 +10,6 @@ public final class Modelika extends JavaPlugin {
     public void onEnable() {
         instance = this;
         getServer().getPluginManager().registerEvents(new MSListener(), this);
-
     }
 
     public static Modelika getInstance() {

@@ -9,8 +9,6 @@ import com.nisovin.magicspells.spells.TargetedSpell;
 import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.MagicConfig;
-import com.ticxo.modelengine.api.ModelEngineAPI;
-import com.ticxo.modelengine.api.entity.BaseEntity;
 import com.ticxo.modelengine.api.model.vfx.VFX;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -30,11 +28,10 @@ import ru.iamdvz.modelika.utils.VectorUtils;
 import ru.iamdvz.modelika.utils.VfxBuilder;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class MegVfx extends TargetedSpell implements TargetedLocationSpell {
+public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell {
     private String modelId;
     private String boneId;
     private Color vfxColor;
@@ -63,8 +60,9 @@ public class MegVfx extends TargetedSpell implements TargetedLocationSpell {
     private Subspell entitySpell;
     private Subspell groundSpell;
 
-    public MegVfx(MagicConfig config, String spellName) {
+    public MegVfxSpell(MagicConfig config, String spellName) {
         super(config, spellName);
+
         modelId = getConfigString("model-id", null);
         boneId = getConfigString("bone-id", null);
         vfxColor = ColorUtil.getColorFromHexString(getConfigString("vfx-color", "ffffff"));
@@ -122,7 +120,6 @@ public class MegVfx extends TargetedSpell implements TargetedLocationSpell {
         return false;
     }
 
-    // не используется в тмуспе
     @Override
     public boolean castAtLocation(Location target, float power) {
         vfxSpawn(target, null, power);
@@ -165,7 +162,6 @@ public class MegVfx extends TargetedSpell implements TargetedLocationSpell {
         vfx.rotate(new EulerAngle(Math.toRadians(originRotation.getX()), Math.toRadians(originRotation.getY()), Math.toRadians(originRotation.getZ())), rotationNewOrigin);
         Set<UUID> entityTargets = new HashSet<>();
         Entity finalEntity = entity;
-        //int task = Bukkit.getScheduler().scheduleSyncRepeatingTask(Modelika.getInstance(), () -> {
         BukkitTask task = new BukkitRunnable() {
             public void run() {
                 playSpellEffects(EffectPosition.SPECIAL, vfx.getPosition().toLocation(vfx.getBase().getWorld()));
