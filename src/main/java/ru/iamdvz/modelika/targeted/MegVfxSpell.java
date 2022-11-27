@@ -226,7 +226,7 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
         if (!vfx.getBase().isDead()) {vfx.destroy();}
         if (entity.getType().equals(EntityType.ARMOR_STAND)) {entity.remove();}
         if (!task.isCancelled()) {task.cancel();}
-        if (!runnable.isCancelled()) {runnable.cancel();}
+        if (runnable != null && !runnable.isCancelled()) {runnable.cancel();}
 
     }
 }
