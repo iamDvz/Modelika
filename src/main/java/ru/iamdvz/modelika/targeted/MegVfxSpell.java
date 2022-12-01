@@ -25,7 +25,7 @@ import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 import ru.iamdvz.modelika.Modelika;
 import ru.iamdvz.modelika.utils.VectorUtils;
-import ru.iamdvz.modelika.utils.VfxBuilder;
+import ru.iamdvz.modelika.utils.VfxUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -129,6 +129,7 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
 
     boolean vfxSpawn(Location target, Player player, float power) {
         Entity entity = player;
+        Set<UUID> entityTargets = new HashSet<>();
         Expression exprX = new ExpressionBuilder(equationX)
                 .variable("t")
                 .build()
@@ -157,10 +158,9 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
             entity.addScoreboardTag("MS_ARMOR_STAND");
         }
         playSpellEffects(EffectPosition.TARGET, entity.getLocation());
-        VFX vfx = VfxBuilder.buildVfx((LivingEntity) entity, modelId, boneId, vfxEnchant, vfxColor, renderDistance, false);
+        VFX vfx = VfxUtils.buildVfx((LivingEntity) entity, modelId, boneId, vfxEnchant, vfxColor, renderDistance, false);
         vfx.create();
         vfx.rotate(new EulerAngle(Math.toRadians(originRotation.getX()), Math.toRadians(originRotation.getY()), Math.toRadians(originRotation.getZ())), rotationNewOrigin);
-        Set<UUID> entityTargets = new HashSet<>();
         Entity finalEntity = entity;
         BukkitTask task = new BukkitRunnable() {
             public void run() {
@@ -168,7 +168,8 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
                 vfx.rotate(new EulerAngle(Math.toRadians(rotationFromOrigin.getX()), Math.toRadians(rotationFromOrigin.getY()), Math.toRadians(rotationFromOrigin.getZ())), false);
                 if (orientPitch) {
                     vfx.getPosition().add(VectorUtils.rotateVector(new Vector(exprX.evaluate(), exprY.evaluate(), exprZ.evaluate()), target.getYaw(), target.getPitch()));
-                } else {
+                }
+                if (!orientPitch) {
                     vfx.getPosition().add(VectorUtils.rotateVector(new Vector(exprX.evaluate(), exprY.evaluate(), exprZ.evaluate()), target.getYaw(), 0));
                 }
                 exprX.setVariable("t", ticker[0]);
@@ -180,7 +181,7 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
                 //!! spell-on-hit-entity
                 if (entitySpell.isTargetedEntitySpell() && entitySpell != null) {
                     for (Entity entityTarget : vfx.getPosition().toLocation(vfx.getBase().getWorld()).getNearbyEntities(hitRadius, hitRadius, hitRadius)) {
-                        if (!entityTargets.contains(entityTarget.getUniqueId()) && !entityTarget.getType().equals(EntityType.ARMOR_STAND) && !entityTarget.equals(player)) {
+                        if (!entityTargets.contains(entityTarget.getUniqueId()) && !entityTarget.getType().equals(EntityType.ARMOR_STAND) && !entityTarget.getType().equals(EntityType.EXPERIENCE_ORB) && !entityTarget.equals(player)) {
                             entitySpell.castAtEntity(player, (LivingEntity) entityTarget, power);
                             entityTargets.add(entityTarget.getUniqueId());
                             if (stopOnHitEntity) {
@@ -225,7 +226,7 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
     void stopVfx(VFX vfx, Entity entity, BukkitTask task, BukkitRunnable runnable) {
         if (!vfx.getBase().isDead()) {vfx.destroy();}
         if (entity.getType().equals(EntityType.ARMOR_STAND)) {entity.remove();}
-        if (!task.isCancelled()) {task.cancel();}
+        if (task != null && !task.isCancelled()) {task.cancel();}
         if (runnable != null && !runnable.isCancelled()) {runnable.cancel();}
 
     }
