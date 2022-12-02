@@ -10,8 +10,6 @@ import com.nisovin.magicspells.util.BlockUtils;
 import com.nisovin.magicspells.util.ColorUtil;
 import com.nisovin.magicspells.util.MagicConfig;
 import com.ticxo.modelengine.api.model.vfx.VFX;
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -24,37 +22,41 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 import ru.iamdvz.modelika.Modelika;
-import ru.iamdvz.modelika.utils.VectorUtils;
+import ru.iamdvz.core.utils.VectorUtil;
 import ru.iamdvz.modelika.utils.VfxUtils;
+import ru.iamdvz.core.api.shaded.slikey.exp4j.Expression;
+import ru.iamdvz.core.api.shaded.slikey.exp4j.ExpressionBuilder;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell {
-    private String modelId;
-    private String boneId;
-    private Color vfxColor;
+    private final String modelId;
+    private final String boneId;
+    private final Color vfxColor;
     private final String equationX;
     private final String equationY;
     private final String equationZ;
     private final String entitySpellName;
     private final String groundSpellName;
-    private int entitySpellDelay;
-    private int renderDistance;
-    private int vfxDuration;
-    private int tickSpeed;
-    private int hitRadius;
-    private int groundHitRadius;
-    private boolean rotationNewOrigin;
-    private boolean spawnOnCaster;
-    private boolean orientPitch;
-    private boolean vfxEnchant;
-    private boolean stopOnHitEntity;
-    private boolean stopOnHitGround;
-    private Vector rotationFromOrigin;
-    private Vector originRotation;
-    private Vector rOffset;
+    private final int entitySpellDelay;
+    private final int renderDistance;
+    private final int vfxDuration;
+    private final int tickSpeed;
+    private final int hitRadius;
+    private final int groundHitRadius;
+    private final int horizontalOffset;
+    private final int verticalOffset;
+    private final boolean rotationNewOrigin;
+    private final boolean spawnOnCaster;
+    private final boolean orientPitch;
+    private final boolean vfxEnchant;
+    private final boolean stopOnHitEntity;
+    private final boolean stopOnHitGround;
+    private final Vector rotationFromOrigin;
+    private final Vector originRotation;
+    private final Vector rOffset;
 
     // ~ non-config ~ //
     private Subspell entitySpell;
@@ -78,6 +80,8 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
         tickSpeed = getConfigInt("tick-speed", 3);
         hitRadius = getConfigInt("hit-radius", 1);
         groundHitRadius = getConfigInt("ground-hit-radius", hitRadius);
+        horizontalOffset = getConfigInt("horizontal-offset", 0);
+        verticalOffset = getConfigInt("vertical-offset", 0);
 
         rotationNewOrigin = getConfigBoolean("rotation-from-origin-set-new-origin", true);
         spawnOnCaster = getConfigBoolean("spawn-on-caster", false);
@@ -132,16 +136,22 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
         Set<UUID> entityTargets = new HashSet<>();
         Expression exprX = new ExpressionBuilder(equationX)
                 .variable("t")
+                .variable("gravity")
                 .build()
-                .setVariable("t", 0);
+                .setVariable("t", 0)
+                .setVariable("gravity", 0);
         Expression exprY = new ExpressionBuilder(equationY)
                 .variable("t")
+                .variable("gravity")
                 .build()
-                .setVariable("t", 0);
+                .setVariable("t", 0)
+                .setVariable("gravity", 0);
         Expression exprZ = new ExpressionBuilder(equationZ)
                 .variable("t")
+                .variable("gravity")
                 .build()
-                .setVariable("t", 0);
+                .setVariable("t", 0)
+                .setVariable("gravity", 0);
         final int[] ticker = {0};
 
         if (!spawnOnCaster) {
@@ -167,14 +177,17 @@ public class MegVfxSpell extends TargetedSpell implements TargetedLocationSpell 
                 playSpellEffects(EffectPosition.SPECIAL, vfx.getPosition().toLocation(vfx.getBase().getWorld()));
                 vfx.rotate(new EulerAngle(Math.toRadians(rotationFromOrigin.getX()), Math.toRadians(rotationFromOrigin.getY()), Math.toRadians(rotationFromOrigin.getZ())), false);
                 if (orientPitch) {
-                    vfx.getPosition().add(VectorUtils.rotateVector(new Vector(exprX.evaluate(), exprY.evaluate(), exprZ.evaluate()), target.getYaw(), target.getPitch()));
+                    vfx.getPosition().add(VectorUtil.rotateVector(new Vector(exprX.evaluate(), exprY.evaluate(), exprZ.evaluate()), target.getYaw() + horizontalOffset, target.getPitch() - verticalOffset));
                 }
                 if (!orientPitch) {
-                    vfx.getPosition().add(VectorUtils.rotateVector(new Vector(exprX.evaluate(), exprY.evaluate(), exprZ.evaluate()), target.getYaw(), 0));
+                    vfx.getPosition().add(VectorUtil.rotateVector(new Vector(exprX.evaluate(), exprY.evaluate(), exprZ.evaluate()), target.getYaw() + horizontalOffset, -verticalOffset));
                 }
                 exprX.setVariable("t", ticker[0]);
                 exprY.setVariable("t", ticker[0]);
                 exprZ.setVariable("t", ticker[0]);
+                exprX.setVariable("gravity", Math.pow(ticker[0], 1.5));
+                exprY.setVariable("gravity", Math.pow(ticker[0], 1.5));
+                exprZ.setVariable("gravity", Math.pow(ticker[0], 1.5));
                 ticker[0]++;
                 vfx.update();
 

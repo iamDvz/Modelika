@@ -1,4 +1,8 @@
 name: Modelika
-version: '${project.version}'
+version: ${project.version}
 main: ru.iamdvz.modelika.Modelika
 api-version: 1.18
+load: POSTWORLD
+depend:
+  - DivizionCore
+  - MagicSpells
